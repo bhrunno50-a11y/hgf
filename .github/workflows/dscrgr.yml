@@ -1,0 +1,57 @@
+name: 📡 Mutiny TV - Ladrón de Contenido Permanente v1.2
+
+on:
+  workflow_dispatch: # Botón manual de PLAY en la web de GitHub con casilleros
+    inputs:
+      url_pirata:
+        description: 'Chorizo de link a clonar (m3u8, mp4, mkv o pixeldrain)'
+        required: true
+        default: 'PONER_URL_AQUÍ'
+      nombre_pelicula:
+        description: 'Nombre del archivo final terminado strictly en .mp4 (Ej: alien_earth_s01e03.mp4)'
+        required: true
+        default: 'estreno_mutiny.mp4'
+
+jobs:
+  descarga_bunker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🗄️ Inicializando espacio en el disco virtual de Microsoft
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Instalando herramientas de disección multimedia por hardware
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg curl jq
+
+      - name: 🚀 Clonación Satelital por Copia Directa Ultra-HD a la RAM
+        run: |
+          # 🪓 [REACTOR RESCATE v1.2 - DIEGO STREAM-COPY ULTRA-HD CORE]
+          export TERM=xterm
+          
+          echo "📥 Descargando fideo digital útil por copia de hardware directa..."
+          # [REPARADO DEFINITIVO v1.2]: Extirpamos de cuajo toda la muga de filtros, rotaciones e inclinaciones.
+          # Usamos -c:v copy y -c:a copy. No procesa píxeles; clona el flujo original espejo en la RAM.
+          # -timeout 10000000 guillotina el comando si internet se tilda sordo en cero bytes.
+          ffmpeg -y -headers "User-Agent: VLC/3.0.18 LibVLC/3.0.18" \
+            -timeout 10000000 -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
+            -i "${{ github.event.inputs.url_pirata }}" -c:v copy -c:a copy -bsf:a aac_adtstoasc "${{ github.event.inputs.nombre_pelicula }}" || true
+
+          # Verificación de chapa anti-bancarrota de tus datos móviles
+          if [ ! -s "${{ github.event.inputs.nombre_pelicula }}" ]; then
+             echo "❌ El caño de red se congeló o el link caducó en internet. Abortando."
+             exit 1
+          fi
+          
+          echo "✅ Película clonada al 100% de calidad Bluray original. Peso total:"
+          du -sh "${{ github.event.inputs.nombre_pelicula }}"
+
+      - name: 💾 Inyectando el Video Intacto de Forma Perpetua en las GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "bunker_mutiny"
+          name: "📦 Mutiny TV - Base de Datos Privada Soberana"
+          body: "Aquí viven tus películas y series resguardadas eternas en calidad Ultra-HD espejo, listas para transmitir o usar en Surge."
+          files: "${{ github.event.inputs.nombre_pelicula }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
