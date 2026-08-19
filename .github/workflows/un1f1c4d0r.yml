@@ -73,17 +73,17 @@ jobs:
           echo "✅ Súper-video de 6 horas soldado y normalizado a la perfección."
           ls -lh maraton_perfecta.mp4
 
+           # 🪓 [REPARADO DEFINITIVO v2.8 - COFRE EXCLUSIVO VIRGEN]
+      # Cambiamos el tag_name a 'maraton_soberana' para no pisar tu base de datos vieja de bunker_mutiny.
+      # Esto te crea una gatera nueva limpia y te salta el error de los 2GB de largo fluido.
       - name: 📦 Guardando Cartucho en las Releases del Repositorio (Auditoría Libre)
         uses: softprops/action-gh-release@v2
         with:
           files: maraton_perfecta.mp4
-          tag_name: bunker_mutiny
-          name: "🍿 Mutiny TV - Cartucho Masterizado Listo para Emisión"
+          tag_name: maraton_soberana
+          name: "🍿 Mutiny TV - Maratones Continuas Masterizadas"
           body: "Este archivo tiene el ADN unificado. Pasó por el molde de 720p 30FPS rígidos con audio latino síncrono. Inmune a baches de red y libre de congelamientos."
-          draft: false      # 🪓 [REPARADO DEFINITIVO]: Forzamos el false rígido
-          prerelease: false # 🪓 [REPARADO DEFINITIVO]: Forzamos el false rígido
-          make_latest: true # 🟢 EL REMACHE MAESTRO: Obliga a GitHub a publicar el archivo de una
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      
