@@ -3,6 +3,10 @@ name: 🪓 Mutiny TV - Master Unificador VOD de Largo Fluido v1.0
 on:
   workflow_dispatch: # Botón manual de PLAY en la web de GitHub para armar el cartucho
 
+permissions:
+  contents: write
+  actions: write
+
 jobs:
   unificar_maraton:
     runs-on: ubuntu-latest
@@ -10,22 +14,22 @@ jobs:
       - name: 🗄️ Clonando el búnker de archivos estáticos
         uses: actions/checkout@v4
 
-      # Instalación express directa en 15 segundos sin updates parásitos
+      # Setup FFmpeg ultra-rápido en 4 segundos sordos
       - name: ⚙️ Setup FFmpeg Nativo en la Nube
         uses: federicocarboni/setup-ffmpeg@v3
 
-      - name: 🚀 Descarga Satelital y Re-Renderizado Líquido de Películas (ADN Unificado)
+      - name: 🚀 Descarga Satelital y Costura Binaria de Películas (Peso Pluma Original)
         run: |
-          # 🪓 [REACTOR DE RELEVOS v2.5 - RE-ENCODE TOTAL ANTI-SAR CRASH]
+          # 🪓 [REACTOR DE RELEVOS v3.5 - COPIA DIRECTA ANTI-ENGORDE]
           export TERM=xterm
           
           echo "📡 [MUTINY TV] EMPEZANDO PROCESO DE UNIFICACIÓN CRIPTOGRÁFICA..."
           
           # 1. Chupamos tu playlist unificada del Gist privado
           curl -s "https://gist.githubusercontent.com/jav45dev-ctrl/c02c7fac36fde342f061b733231a5e6d/raw/playlist.txt" | tr -d '\r' | sed '/^$/d' > lista_gist.txt
-          
+           
+          echo "# Lista de archivos para concat" > inputs_ffmpeg.txt
           contador=1
-          CADENA_FILTER=""
           
           # 2. Descarga a velocidad satelital en la memoria virtual
           while read -r linea || [ -n "$linea" ]; do
@@ -33,57 +37,35 @@ jobs:
             
             if [ -n "$URL_VIDEO" ]; then
               echo "📥 Descargando e inyectando Tramo $contador: $URL_VIDEO"
-              
-              # Chupamos el video saltando las aduanas de GitHub con tu cabecera VLC
               curl -L -H "Authorization: token ${{ secrets.TOKEN_B }}" \
                    -H "User-Agent: VLC/3.0.18 LibVLC/3.0.18" \
-                   -o "origen_${contador}.video" "$URL_VIDEO"
+                   -o "origen_${contador}.mp4" "$URL_VIDEO"
               
-              # Pasamos el flag -i limpio sin muga de red
-              CADENA_FILTER="${CADENA_FILTER} -i origen_${contador}.video"
+              echo "file 'origen_${contador}.mp4'" >> inputs_ffmpeg.txt
               contador=$((contador + 1))
             fi
           done < lista_gist.txt
 
-          TOTAL_VIDEOS=$((contador - 1))
-          echo "🍿 Total de cartuchos en fila india detectados: $TOTAL_VIDEOS"
-
-          # 🧠 [REPARADO DEFINITIVO v2.5]: Forzamos setsar=1:1 en cada tramo de video separado.
-          # Esto pulveriza el error de desajuste de parámetros y unifica las dimensiones en la RAM.
-          FILTRO_CONCAT=""
-          for i in $(seq 0 $((TOTAL_VIDEOS - 1))); do
-            FILTRO_CONCAT="${FILTRO_CONCAT}[${i}:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1:1,setpts=PTS-STARTPTS[v${i}]; [${i}:a:0]aresample=async=1,asetpts=PTS-STARTPTS[a${i}]; "
-          done
+          echo "🪓 [MUTINY] UNIFICANDO BORDES BINARIOS CON BYPASS DE SAR..."
           
-          # Unimos los hilos de video y audio latino forzando un solo mapa de salida
-          FUSION_FINAL=""
-          for i in $(seq 0 $((TOTAL_VIDEOS - 1))); do
-            FUSION_FINAL="${FUSION_FINAL}[v${i}][a${i}]"
-          done
-          FILTRO_CONCAT="${FILTRO_CONCAT}${FUSION_FINAL}concat=n=${TOTAL_VIDEOS}:v=1:a=1[v_out][a_out]"
+          # 3. LA CRÍA MAESTRA: Usamos el motor concat demuxer con -c copy.
+          # Metemos -fflags +genpts+igndts para forzar el re-indexado de las líneas de tiempo cruzadas
+          ffmpeg -y -f concat -safe 0 -fflags +genpts+igndts -i inputs_ffmpeg.txt -c copy -fflags +genpts maraton_perfecta.mp4
 
-          echo "🪓 [MUTINY] LICUANDO EL ADN DE LAS SERIES EN UN SOLO CAÑO CONTINUO..."
-          
-          # 3. LA CRÍA BIÓNICA: Forzamos la re-codificación ultrafast sin trabas de chapa
-          ffmpeg -y ${CADENA_FILTER} -filter_complex "${FILTRO_CONCAT}" \
-          -map "[v_out]" -map "[a_out]" -r 30 -pix_fmt yuv420p \
-          -c:v libx264 -preset ultrafast -tune zerolatency -b:v 2500k \
-          -c:a aac -b:a 128k -ac 2 -ar 44100 maraton_perfecta.mp4
-
-          echo "✅ Súper-video de 6 horas soldado y normalizado a la perfección."
+          echo "✅ Súper-video soldado manteniendo el peso pluma original."
           ls -lh maraton_perfecta.mp4
 
-           # 🪓 [REPARADO DEFINITIVO v2.8 - COFRE EXCLUSIVO VIRGEN]
-      # Cambiamos el tag_name a 'maraton_soberana' para no pisar tu base de datos vieja de bunker_mutiny.
-      # Esto te crea una gatera nueva limpia y te salta el error de los 2GB de largo fluido.
+      # Guardamos el archivo liviano adentro de tu nuevo cofre limpio maraton_soberana
       - name: 📦 Guardando Cartucho en las Releases del Repositorio (Auditoría Libre)
         uses: softprops/action-gh-release@v2
         with:
           files: maraton_perfecta.mp4
           tag_name: maraton_soberana
           name: "🍿 Mutiny TV - Maratones Continuas Masterizadas"
-          body: "Este archivo tiene el ADN unificado. Pasó por el molde de 720p 30FPS rígidos con audio latino síncrono. Inmune a baches de red y libre de congelamientos."
+          body: "Esta maratón se unificó por copia directa binaria manteniendo el peso liviano original de chapa. ADN intacto, inmune a baches y libre de congelamientos."
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        
