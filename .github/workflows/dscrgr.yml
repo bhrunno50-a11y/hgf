@@ -1,57 +1,68 @@
-name: 🛩️ Mutiny TV - Pasamano de Contenido Satelital v2.0
+name: ladron
 
 on:
-  workflow_dispatch: # Botón manual de PLAY en la web de GitHub con casilleros
-    inputs:
-      url_release_vieja:
-        description: 'URL directa de la Release vieja en Cuenta B (.mp4)'
-        required: true
-        default: 'https://github.com'
-      nombre_archivo_nuevo:
-        description: 'Nombre final camuflado strictly en formato de texto .txt (Ej: colaterales_04.txt)'
-        required: true
-        default: 'estreno_mutiny.txt'
+  workflow_dispatch: # Se activa de forma manual con el botón de PLAY en la web de GitHub
+
+permissions:
+  contents: write
+  actions: write
 
 jobs:
-  clonado_bunker:
+  descarga_bunker:
     runs-on: ubuntu-latest
     steps:
-      - name: 🗄️ Inicializando gatera local en el disco de Microsoft
+      - name: 🗄️ Inicializando espacio en el disco virtual de Microsoft
         uses: actions/checkout@v4
 
-      - name: ⚙️ Instalando herramientas de disección multimedia
-        run: sudo apt-get update && sudo apt-get install -y curl jq
-
-      - name: 🚀 Succionando de Servidor a Servidor en Frío Absoluto
+      - name: 🛠️ Instalar FFmpeg y herramientas de forma interna y nativa
         run: |
-          # 🪓 [REACTOR PASAMANO v2.0 - DIEGO CLOUD BRIDGE MANUAL FIXED]
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg curl
+
+      - name: 🚀 Extracción en Cadena Directa e Inmune a Bloqueos de Tamaño
+        run: |
+          # 🪓 [REACTOR CENTRAL INDUSTRIAL v6.3 - STREAMDROME AUTOSYNC CORE]
           export TERM=xterm
           
-          # Capturamos tus casilleros del celular horizontal
-          URL_B="${{ github.event.inputs.url_release_vieja }}"
-          NOMBRE_TXT="${{ github.event.inputs.nombre_archivo_nuevo }}"
-
-          echo "📥 Chupando el video de 1.2GB desde la Cuenta B a velocidad gigabit..."
-          # Se traga el archivo en la RAM de la Actions de servidor a servidor en 10 segundos sordos
-          curl -L -o "$NOMBRE_TXT" "$URL_B"
-
-          # Verificación de chapa anti-bancarrota de tus datos móviles
-          if [ ! -s "$NOMBRE_TXT" ]; then
-             echo "❌ El caño de red vino vacío o la URL de la Cuenta B falló. Abortando."
-             exit 1
-          fi
-
-          echo "✅ Película enjaulada en la RAM local con éxito. Peso:"
-          du -sh "$NOMBRE_TXT"
-
-          echo "📦 Fabricando el nuevo cofre 'bunker_mutiny' en tu Cuenta C..."
-          # Crea la Release limpia en tu nueva cuenta de forma automática
-          gh release create bunker_mutiny --title "📦 Mutiny TV - Base de Datos Privada Soberana" --notes "Películas de 1.2GB resguardadas en formato .txt eternas libres de bloqueo attachment." || true
-
-          echo "📤 Eyectando el archivo camuflado en las Releases de tu Cuenta C..."
-          # Sube el .txt de un solo tajo plano a tu cuenta nueva
-          gh release upload bunker_mutiny "$NOMBRE_TXT" --clobber
+          # 🔑 CONFIGURACIÓN: Aquí debes poner el secreto de tu cuenta limpia actual
+          export GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
           
-          echo "🔥 ¡OPERACIÓN COMPLETA DEBOXES! Tu chip de Antel gastó strictly CERO megas."
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "📡 [STREAMDROME] SUCCIONANDO ÓRDENES DE TRABAJO DESDE EL GIST..."
+          
+          # 1. Descarga de tu playlist unificada desde tu Gist privado
+          curl -s "https://gist.githubusercontent.com/bhrunno50-a11y/8163a63fbb8bd9b931456307baed7a6b/raw/1408.txt" | tr -d '\r' | sed '/^$/d' > ordenes_bunker.txt
+         
+          contador=1
+          
+          # 2. EL REMACHE MAESTRO DE AJEDREZ: Descriptor de archivos 3 (<&3) para blindar el bucle
+          while read -r linea <&3 || [ -n "$linea" ]; do
+            URL_PIRATA=$(echo "$linea" | awk -F'|' '{print $1}' | tr -d ' ')
+            NOMBRE_FINAL=$(echo "$linea" | awk -F'|' '{print $2}' | tr -d ' ')
+            
+            if [ -n "$URL_PIRATA" ] && [ -n "$NOMBRE_FINAL" ]; then
+              echo "------------------------------------------------------------"
+              echo "🍿 [PROCESANDO TRABAJO N° $contador]: $NOMBRE_FINAL"
+              echo "------------------------------------------------------------"
+              
+              echo "📥 FASE ÚNICA: Extrayendo, Remuestreando y Purificando el Flujo Directo por Red..."
+              ffmpeg -y -nostdin \
+                -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
+                -user_agent "VLC/3.0.18 LibVLC/3.0.18" -i "$URL_PIRATA" \
+                -filter_complex "[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1:1[v_moldeado]" \
+                -map "[v_moldeado]" -map 0:a:0? -r 30 -pix_fmt yuv420p \
+                -c:v libx264 -preset ultrafast -crf 22 -g 60 -keyint_min 60 \
+                -c:a aac -b:a 128k -ac 2 -ar 44100 -async 1 "$NOMBRE_FINAL" || { echo "⚠️ Falló la extracción del fideo. Saltando..."; rm -f "$NOMBRE_FINAL"; contador=$((contador + 1)); continue; }
+                
+              echo "💾 FASE DE COFRE: Inyectando el video masterizado en las Releases..."
+              # Si creas una Release llamada 'bunker_mutiny' en tu nueva cuenta, se subirá ahí automáticamente
+              gh release upload bunker_mutiny "$NOMBRE_FINAL" --clobber || echo "⚠️ Falló la subida de chapa."
+              
+              echo "🪓 FASE DE PURGA: Reseteando espacio de disco virtual..."
+              rm -f "$NOMBRE_FINAL"
+              
+              echo "✅ TRABAJO N° $contador COMPLETADO CON ÉXITO ABSOLUTO."
+              contador=$((contador + 1))
+            fi
+          done 3< ordenes_bunker.txt
+          
+          echo "🏁 [STREAMDROME] Toda la cartelera del Gist fue clonada con éxito."
