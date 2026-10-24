@@ -21,7 +21,7 @@ jobs:
 
       - name: 🚀 Extracción en Cadena Directa e Inmune a Bloqueos de Tamaño
         run: |
-          # 🪓 [REACTOR CENTRAL INDUSTRIAL v6.4 - STREAMDROME ANTI-SIZE BLOCK CORE]
+          # 🪓 [REACTOR CENTRAL INDUSTRIAL v6.5 - STREAMDROME ARGUMENT FIXED CORE]
           export TERM=xterm
           
           # 🔑 CONFIGURACIÓN: Secreto de tu cuenta actual
@@ -49,7 +49,7 @@ jobs:
               
               echo "📥 FASE ÚNICA: Extrayendo y Segmentando el Flujo Directo por Peso (Límite 1.4GB)..."
               
-              # Usamos el formato 'segment' de FFmpeg para forzar el corte quirúrgico por bytes exactos
+              # Corregido: Colocamos -f segment y sus opciones al final de la cadena de video/audio
               ffmpeg -y -nostdin \
                 -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
                 -user_agent "VLC/3.0.18 LibVLC/3.0.18" -i "$URL_PIRATA" \
@@ -57,8 +57,7 @@ jobs:
                 -map "[v_moldeado]" -map 0:a:0? -r 30 -pix_fmt yuv420p \
                 -c:v libx264 -preset ultrafast -crf 22 -g 60 -keyint_min 60 \
                 -c:a aac -b:a 128k -ac 2 -ar 44100 -async 1 \
-                -f segment -segment_size 1500M -reset_timestamps 1 \
-                -segment_name_format "%d" "${BASE_NOMBRE}%s.mp4" || { echo "⚠️ Falló la extracción del fideo. Saltando..."; rm -f "${BASE_NOMBRE}"*.mp4; contador=$((contador + 1)); continue; }
+                -f segment -segment_size 1500M -reset_timestamps 1 -segment_name_format "%d" "${BASE_NOMBRE}%s.mp4" || { echo "⚠️ Falló la extracción del fideo. Saltando..."; rm -f "${BASE_NOMBRE}"*.mp4; contador=$((contador + 1)); continue; }
                 
               echo "💾 FASE DE COFRE: Analizando e Inyectando las partes generadas en las Releases..."
               
@@ -94,3 +93,5 @@ jobs:
           done 3< ordenes_bunker.txt
           
           echo "🏁 [STREAMDROME] Toda la cartelera del Gist fue clonada con éxito."
+
+          
