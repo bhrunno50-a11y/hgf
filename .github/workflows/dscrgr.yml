@@ -21,10 +21,10 @@ jobs:
 
       - name: 🚀 Extracción en Cadena Directa e Inmune a Bloqueos de Tamaño
         run: |
-          # 🪓 [REACTOR CENTRAL INDUSTRIAL v6.3 - STREAMDROME AUTOSYNC CORE]
+          # 🪓 [REACTOR CENTRAL INDUSTRIAL v6.4 - STREAMDROME ANTI-SIZE BLOCK CORE]
           export TERM=xterm
           
-          # 🔑 CONFIGURACIÓN: Aquí debes poner el secreto de tu cuenta limpia actual
+          # 🔑 CONFIGURACIÓN: Secreto de tu cuenta actual
           export GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
           
           echo "📡 [STREAMDROME] SUCCIONANDO ÓRDENES DE TRABAJO DESDE EL GIST..."
@@ -34,7 +34,7 @@ jobs:
          
           contador=1
           
-          # 2. EL REMACHE MAESTRO DE AJEDREZ: Descriptor de archivos 3 (<&3) para blindar el bucle
+          # 2. Descriptor de archivos 3 (<&3) para blindar el bucle
           while read -r linea <&3 || [ -n "$linea" ]; do
             URL_PIRATA=$(echo "$linea" | awk -F'|' '{print $1}' | tr -d ' ')
             NOMBRE_FINAL=$(echo "$linea" | awk -F'|' '{print $2}' | tr -d ' ')
@@ -44,21 +44,49 @@ jobs:
               echo "🍿 [PROCESANDO TRABAJO N° $contador]: $NOMBRE_FINAL"
               echo "------------------------------------------------------------"
               
-              echo "📥 FASE ÚNICA: Extrayendo, Remuestreando y Purificando el Flujo Directo por Red..."
+              # Extraemos la base del nombre sin el .mp4 para poder numerar las partes limpiamente
+              BASE_NOMBRE=$(basename "$NOMBRE_FINAL" .mp4)
+              
+              echo "📥 FASE ÚNICA: Extrayendo y Segmentando el Flujo Directo por Peso (Límite 1.4GB)..."
+              
+              # Usamos el formato 'segment' de FFmpeg para forzar el corte quirúrgico por bytes exactos
               ffmpeg -y -nostdin \
                 -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
                 -user_agent "VLC/3.0.18 LibVLC/3.0.18" -i "$URL_PIRATA" \
                 -filter_complex "[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1:1[v_moldeado]" \
                 -map "[v_moldeado]" -map 0:a:0? -r 30 -pix_fmt yuv420p \
                 -c:v libx264 -preset ultrafast -crf 22 -g 60 -keyint_min 60 \
-                -c:a aac -b:a 128k -ac 2 -ar 44100 -async 1 "$NOMBRE_FINAL" || { echo "⚠️ Falló la extracción del fideo. Saltando..."; rm -f "$NOMBRE_FINAL"; contador=$((contador + 1)); continue; }
+                -c:a aac -b:a 128k -ac 2 -ar 44100 -async 1 \
+                -f segment -segment_size 1500M -reset_timestamps 1 \
+                -segment_name_format "%d" "${BASE_NOMBRE}%s.mp4" || { echo "⚠️ Falló la extracción del fideo. Saltando..."; rm -f "${BASE_NOMBRE}"*.mp4; contador=$((contador + 1)); continue; }
                 
-              echo "💾 FASE DE COFRE: Inyectando el video masterizado en las Releases..."
-              # Si creas una Release llamada 'bunker_mutiny' en tu nueva cuenta, se subirá ahí automáticamente
-              gh release upload bunker_mutiny "$NOMBRE_FINAL" --clobber || echo "⚠️ Falló la subida de chapa."
+              echo "💾 FASE DE COFRE: Analizando e Inyectando las partes generadas en las Releases..."
               
-              echo "🪓 FASE DE PURGA: Reseteando espacio de disco virtual..."
-              rm -f "$NOMBRE_FINAL"
+              # Evaluamos la Parte 1 (Si es única, se llamará 'pelicula0.mp4')
+              if [ -f "${BASE_NOMBRE}0.mp4" ]; then
+                # Si no se generó una segunda parte, le dejamos el nombre limpio original
+                if [ ! -f "${BASE_NOMBRE}1.mp4" ]; then
+                  mv "${BASE_NOMBRE}0.mp4" "$NOMBRE_FINAL"
+                  echo "📤 Subiendo archivo único: $NOMBRE_FINAL"
+                  gh release upload bunker_mutiny "$NOMBRE_FINAL" --clobber || echo "⚠️ Falló la subida de chapa."
+                  rm -f "$NOMBRE_FINAL"
+                else
+                  # Si existe la parte 1, la renombramos al nombre original sin el cero incrustado
+                  mv "${BASE_NOMBRE}0.mp4" "$NOMBRE_FINAL"
+                  echo "📤 Subiendo Parte 1: $NOMBRE_FINAL"
+                  gh release upload bunker_mutiny "$NOMBRE_FINAL" --clobber || echo "⚠️ Falló la subida de chapa de la parte 1."
+                  rm -f "$NOMBRE_FINAL"
+                  
+                  # Si existe la parte 2 (indexada como 1 por FFmpeg), le inyectamos tu sufijo '_2.mp4'
+                  mv "${BASE_NOMBRE}1.mp4" "${BASE_NOMBRE}_2.mp4"
+                  echo "📤 Subiendo Parte 2 Detectada: ${BASE_NOMBRE}_2.mp4"
+                  gh release upload bunker_mutiny "${BASE_NOMBRE}_2.mp4" --clobber || echo "⚠️ Falló la subida de chapa de la parte 2."
+                  rm -f "${BASE_NOMBRE}_2.mp4"
+                fi
+              fi
+              
+              echo "🪓 FASE DE PURGA: Asegurando limpieza total del disco..."
+              rm -f "${BASE_NOMBRE}"*.mp4
               
               echo "✅ TRABAJO N° $contador COMPLETADO CON ÉXITO ABSOLUTO."
               contador=$((contador + 1))
