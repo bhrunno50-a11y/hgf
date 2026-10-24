@@ -17,11 +17,11 @@ jobs:
       - name: 🛠️ Instalar FFmpeg y herramientas de forma interna y nativa
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg curl
+          sudo apt-get install -y ffmpeg curl jq
 
       - name: 🚀 Extracción en Cadena Directa e Inmune a Bloqueos de Tamaño
         run: |
-          # 🪓 [REACTOR CENTRAL INDUSTRIAL v6.5 - STREAMDROME ARGUMENT FIXED CORE]
+          # 🪓 [REACTOR CENTRAL INDUSTRIAL v6.6 - STREAMDROME SIZE-RESCUE CORE]
           export TERM=xterm
           
           # 🔑 CONFIGURACIÓN: Secreto de tu cuenta actual
@@ -44,49 +44,58 @@ jobs:
               echo "🍿 [PROCESANDO TRABAJO N° $contador]: $NOMBRE_FINAL"
               echo "------------------------------------------------------------"
               
-              # Extraemos la base del nombre sin el .mp4 para poder numerar las partes limpiamente
+              # Nombre base temporal para procesar sin interferencias
+              ARCHIVO_TMP="temp_proceso.mp4"
               BASE_NOMBRE=$(basename "$NOMBRE_FINAL" .mp4)
               
-              echo "📥 FASE ÚNICA: Extrayendo y Segmentando el Flujo Directo por Peso (Límite 1.4GB)..."
-              
-              # Corregido: Colocamos -f segment y sus opciones al final de la cadena de video/audio
+              echo "📥 FASE 1: Extrayendo y Remuestreando el Flujo Original..."
               ffmpeg -y -nostdin \
                 -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
                 -user_agent "VLC/3.0.18 LibVLC/3.0.18" -i "$URL_PIRATA" \
                 -filter_complex "[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1:1[v_moldeado]" \
                 -map "[v_moldeado]" -map 0:a:0? -r 30 -pix_fmt yuv420p \
                 -c:v libx264 -preset ultrafast -crf 22 -g 60 -keyint_min 60 \
-                -c:a aac -b:a 128k -ac 2 -ar 44100 -async 1 \
-                -f segment -segment_size 1500M -reset_timestamps 1 -segment_name_format "%d" "${BASE_NOMBRE}%s.mp4" || { echo "⚠️ Falló la extracción del fideo. Saltando..."; rm -f "${BASE_NOMBRE}"*.mp4; contador=$((contador + 1)); continue; }
+                -c:a aac -b:a 128k -ac 2 -ar 44100 -async 1 "$ARCHIVO_TMP" || { echo "⚠️ Falló la extracción del fideo. Saltando..."; rm -f "$ARCHIVO_TMP"; contador=$((contador + 1)); continue; }
                 
-              echo "💾 FASE DE COFRE: Analizando e Inyectando las partes generadas en las Releases..."
+              # ⚖️ MEDIDOR AUTOMÁTICO DE PESO
+              PESO_BYTES=$(stat -c%s "$ARCHIVO_TMP")
+              LIMITE_BYTES=1500000000 # 1.5 Gigabytes estrictos
               
-              # Evaluamos la Parte 1 (Si es única, se llamará 'pelicula0.mp4')
-              if [ -f "${BASE_NOMBRE}0.mp4" ]; then
-                # Si no se generó una segunda parte, le dejamos el nombre limpio original
-                if [ ! -f "${BASE_NOMBRE}1.mp4" ]; then
-                  mv "${BASE_NOMBRE}0.mp4" "$NOMBRE_FINAL"
-                  echo "📤 Subiendo archivo único: $NOMBRE_FINAL"
-                  gh release upload bunker_mutiny "$NOMBRE_FINAL" --clobber || echo "⚠️ Falló la subida de chapa."
-                  rm -f "$NOMBRE_FINAL"
-                else
-                  # Si existe la parte 1, la renombramos al nombre original sin el cero incrustado
-                  mv "${BASE_NOMBRE}0.mp4" "$NOMBRE_FINAL"
-                  echo "📤 Subiendo Parte 1: $NOMBRE_FINAL"
-                  gh release upload bunker_mutiny "$NOMBRE_FINAL" --clobber || echo "⚠️ Falló la subida de chapa de la parte 1."
-                  rm -f "$NOMBRE_FINAL"
-                  
-                  # Si existe la parte 2 (indexada como 1 por FFmpeg), le inyectamos tu sufijo '_2.mp4'
-                  mv "${BASE_NOMBRE}1.mp4" "${BASE_NOMBRE}_2.mp4"
-                  echo "📤 Subiendo Parte 2 Detectada: ${BASE_NOMBRE}_2.mp4"
-                  gh release upload bunker_mutiny "${BASE_NOMBRE}_2.mp4" --clobber || echo "⚠️ Falló la subida de chapa de la parte 2."
-                  rm -f "${BASE_NOMBRE}_2.mp4"
-                fi
+              echo "⚖️ Peso detectado: $PESO_BYTES bytes."
+              
+              if [ "$PESO_BYTES" -gt "$LIMITE_BYTES" ]; then
+                echo "⚠️ EL ARCHIVO EXCEDE EL GIGA Y MEDIO. Activando serrucho de emergencia..."
+                
+                # Obtenemos la duración exacta del video usando la herramienta ffprobe
+                DURACION_TOTAL=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$ARCHIVO_TMP")
+                MITAD_TIEMPO=$(echo "$DURACION_TOTAL / 2" | bc -l)
+                
+                echo "🎬 Duración: $DURACION_TOTAL segundos. Cortando en el segundo: $MITAD_TIEMPO"
+                
+                # Cortamos la Parte 1 desde el inicio (0) hasta la mitad del tiempo de forma ultrarrápida
+                ffmpeg -y -i "$ARCHIVO_TMP" -t "$MITAD_TIEMPO" -c copy -map 0 "$NOMBRE_FINAL"
+                
+                # Cortamos la Parte 2 desde la mitad hasta el final inyectando tu sufijo '_2'
+                ffmpeg -y -ss "$MITAD_TIEMPO" -i "$ARCHIVO_TMP" -c copy -map 0 "${BASE_NOMBRE}_2.mp4"
+                
+                echo "💾 FASE DE COFRE: Inyectando ambas partes en las Releases..."
+                echo "📤 Subiendo Parte 1: $NOMBRE_FINAL"
+                gh release upload bunker_mutiny "$NOMBRE_FINAL" --clobber || echo "⚠️ Falló la subida de la parte 1."
+                
+                echo "📤 Subiendo Parte 2: ${BASE_NOMBRE}_2.mp4"
+                gh release upload bunker_mutiny "${BASE_NOMBRE}_2.mp4" --clobber || echo "⚠️ Falló la subida de la parte 2."
+                
+                # Limpieza de las partes creadas
+                rm -f "$NOMBRE_FINAL" "${BASE_NOMBRE}_2.mp4"
+              else
+                echo "✅ Peso seguro (Menor a 1.5GB). Subiendo como archivo único..."
+                mv "$ARCHIVO_TMP" "$NOMBRE_FINAL"
+                gh release upload bunker_mutiny "$NOMBRE_FINAL" --clobber || echo "⚠️ Falló la subida de chapa."
+                rm -f "$NOMBRE_FINAL"
               fi
               
-              echo "🪓 FASE DE PURGA: Asegurando limpieza total del disco..."
-              rm -f "${BASE_NOMBRE}"*.mp4
-              
+              # Limpieza final preventiva del espacio de trabajo
+              rm -f "$ARCHIVO_TMP"
               echo "✅ TRABAJO N° $contador COMPLETADO CON ÉXITO ABSOLUTO."
               contador=$((contador + 1))
             fi
@@ -94,4 +103,4 @@ jobs:
           
           echo "🏁 [STREAMDROME] Toda la cartelera del Gist fue clonada con éxito."
 
-          
+         
